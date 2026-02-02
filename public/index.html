@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text-to-Form Generator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔮 Text-to-Form Generator</h1>
+        <p>Metninizi yazın, biz form alanlarını otomatik tespit edelim</p>
+      </header>
+
+      <main>
+        <section class="input-section">
+          <label for="input-text">Metin Girin</label>
+          <textarea
+            id="input-text"
+            placeholder="Örnek: Merhaba, bana test@example.com adresinden veya 0532 123 4567 numarasından ulaşabilirsiniz. Randevu tarihi 15.03.2026"
+            rows="5"
+          ></textarea>
+          <button id="generate-btn" type="button">
+            <span class="btn-icon">⚡</span>
+            Form Oluştur
+          </button>
+        </section>
+
+        <section class="results-section" id="results" style="display: none">
+          <div class="tabs">
+            <button class="tab active" data-tab="fields">📋 Alanlar</button>
+            <button class="tab" data-tab="preview">👁️ Önizleme</button>
+            <button class="tab" data-tab="readonly">🔒 Readonly</button>
+            <button class="tab" data-tab="html">🏷️ HTML</button>
+            <button class="tab" data-tab="zod">⚡ Zod</button>
+          </div>
+
+          <div class="tab-content active" id="tab-fields">
+            <div class="fields-list" id="fields-list"></div>
+          </div>
+
+          <div class="tab-content" id="tab-preview">
+            <div class="form-preview" id="form-preview"></div>
+          </div>
+
+          <div class="tab-content" id="tab-readonly">
+            <p class="readonly-info">
+              🔒 Bu önizlemede alanlar dolu ve düzenlenemez
+            </p>
+            <div class="form-preview readonly" id="form-readonly"></div>
+          </div>
+
+          <div class="tab-content" id="tab-html">
+            <div class="code-header">
+              <span>HTML</span>
+              <button class="copy-btn" data-target="html-code">
+                📋 Kopyala
+              </button>
+            </div>
+            <pre><code id="html-code"></code></pre>
+          </div>
+
+          <div class="tab-content" id="tab-zod">
+            <div class="code-header">
+              <span>Zod Schema</span>
+              <button class="copy-btn" data-target="zod-code">
+                📋 Kopyala
+              </button>
+            </div>
+            <pre><code id="zod-code"></code></pre>
+          </div>
+        </section>
+
+        <section class="loading" id="loading" style="display: none">
+          <div class="spinner"></div>
+          <p>Analiz ediliyor...</p>
+        </section>
+
+        <section class="error" id="error" style="display: none">
+          <p id="error-message"></p>
+        </section>
+      </main>
+
+      <footer>
+        <p>Text-to-Form API Demo</p>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
