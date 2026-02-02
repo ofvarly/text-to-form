@@ -30,33 +30,44 @@
         <section class="results-section" id="results" style="display: none">
           <div class="tabs">
             <button class="tab active" data-tab="fields">📋 Alanlar</button>
+            <button class="tab" data-tab="builder">🔧 Builder</button>
             <button class="tab" data-tab="preview">👁️ Önizleme</button>
-            <button class="tab" data-tab="readonly">🔒 Readonly</button>
             <button class="tab" data-tab="html">🏷️ HTML</button>
             <button class="tab" data-tab="zod">⚡ Zod</button>
+            <button class="tab" data-tab="react">⚛️ React</button>
+            <button class="tab" data-tab="vue">💚 Vue</button>
+            <button class="tab" data-tab="json">📄 JSON</button>
           </div>
 
           <div class="tab-content active" id="tab-fields">
             <div class="fields-list" id="fields-list"></div>
           </div>
 
-          <div class="tab-content" id="tab-preview">
-            <div class="form-preview" id="form-preview"></div>
+          <div class="tab-content" id="tab-builder">
+            <p class="builder-info">
+              🔧 Alanları düzenle, sırasını değiştir veya sil
+            </p>
+            <div class="builder-list" id="builder-list"></div>
+            <button class="add-field-btn" id="add-field-btn" type="button">
+              ➕ Yeni Alan Ekle
+            </button>
           </div>
 
-          <div class="tab-content" id="tab-readonly">
-            <p class="readonly-info">
-              🔒 Bu önizlemede alanlar dolu ve düzenlenemez
-            </p>
-            <div class="form-preview readonly" id="form-readonly"></div>
+          <div class="tab-content" id="tab-preview">
+            <div class="form-preview" id="form-preview"></div>
           </div>
 
           <div class="tab-content" id="tab-html">
             <div class="code-header">
               <span>HTML</span>
-              <button class="copy-btn" data-target="html-code">
-                📋 Kopyala
-              </button>
+              <div class="code-actions">
+                <button class="copy-btn" data-target="html-code">
+                  📋 Kopyala
+                </button>
+                <button class="download-btn" data-format="html">
+                  ⬇️ İndir
+                </button>
+              </div>
             </div>
             <pre><code id="html-code"></code></pre>
           </div>
@@ -64,11 +75,57 @@
           <div class="tab-content" id="tab-zod">
             <div class="code-header">
               <span>Zod Schema</span>
-              <button class="copy-btn" data-target="zod-code">
-                📋 Kopyala
-              </button>
+              <div class="code-actions">
+                <button class="copy-btn" data-target="zod-code">
+                  📋 Kopyala
+                </button>
+                <button class="download-btn" data-format="zod">⬇️ İndir</button>
+              </div>
             </div>
             <pre><code id="zod-code"></code></pre>
+          </div>
+
+          <div class="tab-content" id="tab-react">
+            <div class="code-header">
+              <span>React Component</span>
+              <div class="code-actions">
+                <button class="copy-btn" data-target="react-code">
+                  📋 Kopyala
+                </button>
+                <button class="download-btn" data-format="react">
+                  ⬇️ İndir
+                </button>
+              </div>
+            </div>
+            <pre><code id="react-code"></code></pre>
+          </div>
+
+          <div class="tab-content" id="tab-vue">
+            <div class="code-header">
+              <span>Vue Component</span>
+              <div class="code-actions">
+                <button class="copy-btn" data-target="vue-code">
+                  📋 Kopyala
+                </button>
+                <button class="download-btn" data-format="vue">⬇️ İndir</button>
+              </div>
+            </div>
+            <pre><code id="vue-code"></code></pre>
+          </div>
+
+          <div class="tab-content" id="tab-json">
+            <div class="code-header">
+              <span>JSON Schema</span>
+              <div class="code-actions">
+                <button class="copy-btn" data-target="json-code">
+                  📋 Kopyala
+                </button>
+                <button class="download-btn" data-format="json">
+                  ⬇️ İndir
+                </button>
+              </div>
+            </div>
+            <pre><code id="json-code"></code></pre>
           </div>
         </section>
 
@@ -87,6 +144,6 @@
       </footer>
     </div>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
