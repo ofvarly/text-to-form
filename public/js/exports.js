@@ -164,7 +164,7 @@ export function generateJSONSchema(fields) {
 }
 
 /**
- * Field dizisinden HTML form kodu üretir
+ * Field dizisinden HTML form kodu üretir (export için - değersiz)
  * @param {Array} fields - Form alanları
  * @returns {string} - HTML form string
  */
@@ -178,6 +178,33 @@ export function generateHTMLFromFields(fields) {
     return `  <div class="form-group">
     <label for="${field.name}">${escapeHTML(field.label)}</label>
     <input type="${field.type}" id="${field.name}" name="${field.name}"${required}>
+  </div>`;
+  });
+
+  return `<form>
+${inputLines.join("\n")}
+  <button type="submit">Gönder</button>
+</form>`;
+}
+
+/**
+ * Önizleme için HTML üretir (sample değerler ile)
+ * @param {Array} fields - Form alanları
+ * @returns {string} - HTML form string with values
+ */
+export function generatePreviewHTML(fields) {
+  if (!fields || fields.length === 0) {
+    return "<form></form>";
+  }
+
+  const inputLines = fields.map((field) => {
+    const required = field.required ? " required" : "";
+    const value = field.sample
+      ? ` value="${escapeHTML(String(field.sample))}"`
+      : "";
+    return `  <div class="form-group">
+    <label for="${field.name}">${escapeHTML(field.label)}</label>
+    <input type="text" id="${field.name}" name="${field.name}"${value}${required} readonly>
   </div>`;
   });
 

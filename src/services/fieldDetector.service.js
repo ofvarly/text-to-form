@@ -21,6 +21,10 @@ const phoneRule = require("../rules/phone.rule");
 const priceRule = require("../rules/price.rule");
 const dateRule = require("../rules/date.rule");
 const nameRule = require("../rules/name.rule");
+const tcKimlikRule = require("../rules/tcKimlik.rule");
+const ibanRule = require("../rules/iban.rule");
+const urlRule = require("../rules/url.rule");
+const ageRule = require("../rules/age.rule");
 
 /**
  * Tüm aktif rule'ların listesi
@@ -30,7 +34,17 @@ const nameRule = require("../rules/name.rule");
  *   1. rules/ klasörüne yeni.rule.js oluştur
  *   2. Buraya import et ve RULES dizisine ekle
  */
-const RULES = [emailRule, phoneRule, priceRule, dateRule, nameRule];
+const RULES = [
+  emailRule,
+  phoneRule,
+  priceRule,
+  dateRule,
+  nameRule,
+  tcKimlikRule,
+  ibanRule,
+  urlRule,
+  ageRule,
+];
 
 /**
  * Metin içindeki tüm form alanlarını tespit eder

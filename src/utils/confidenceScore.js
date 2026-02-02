@@ -16,4 +16,4 @@ function weightedAvg(pairs) {
   return clamp01(sum / wsum);
 }
 
-module.exports = { clamp01, weightedAvg };
+module.exports = { clamp01, weightedAvg, calculateConfidence: clamp01 };

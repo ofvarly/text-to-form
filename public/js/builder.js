@@ -18,6 +18,7 @@ import {
   generateJSONSchema,
   generateHTMLFromFields,
   generateZodFromFields,
+  generatePreviewHTML,
 } from "./exports.js";
 
 // DOM Elements
@@ -271,15 +272,13 @@ function handleDragEnd(e) {
  * Tüm çıktıları günceller (HTML, Zod, React, Vue, JSON)
  */
 export function updateOutputs() {
-  // HTML & Zod
-  const html = generateHTMLFromFields(editableFields);
-  const zod = generateZodFromFields(editableFields);
+  // Önizleme (sample değerlerle)
+  formPreview.innerHTML = generatePreviewHTML(editableFields);
 
-  formPreview.innerHTML = html;
-  htmlCode.textContent = html;
-  zodCode.textContent = zod;
-
+  // HTML & Zod (export için - değersiz)
   // Export formats
+  htmlCode.textContent = generateHTMLFromFields(editableFields);
+  zodCode.textContent = generateZodFromFields(editableFields);
   reactCode.textContent = generateReactComponent(editableFields);
   vueCode.textContent = generateVueComponent(editableFields);
   jsonCode.textContent = generateJSONSchema(editableFields);
