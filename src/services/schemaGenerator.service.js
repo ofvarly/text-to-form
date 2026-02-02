@@ -17,10 +17,6 @@
  *   const zod = generateZodSchema(fields);
  */
 
-// ============================================================
-// HTML GENERATOR
-// ============================================================
-
 /**
  * Form alanlarından HTML form kodu üretir
  *
@@ -71,10 +67,6 @@ ${inputLines.join("\n")}
   <button type="submit">Gönder</button>
 </form>`;
 }
-
-// ============================================================
-// ZOD SCHEMA GENERATOR
-// ============================================================
 
 /**
  * Form alanlarından Zod validation schema üretir
@@ -150,10 +142,6 @@ ${schemaLines.join(",\n")}
 })`;
 }
 
-// ============================================================
-// YARDIMCI FONKSİYONLAR
-// ============================================================
-
 /**
  * HTML karakterlerini escape eder (XSS koruması)
  *
@@ -179,9 +167,5 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;") // Büyüktür
     .replace(/"/g, "&quot;"); // Çift tırnak
 }
-
-// ============================================================
-// EXPORT
-// ============================================================
 
 module.exports = { generateHTML, generateZodSchema };
