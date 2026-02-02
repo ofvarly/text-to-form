@@ -15,8 +15,6 @@
  * NOT: Sadece Türkiye GSM numaraları destekleniyor (5xx ile başlayan)
  */
 
-const { weightedAvg } = require("../utils/confidenceScore");
-
 // ============================================================
 // REGEX PATTERN
 // ============================================================
@@ -61,11 +59,11 @@ module.exports = {
    *   (Fazla boşluklar tek boşluğa indirilir)
    */
   match(text) {
-    const m = text.match(PHONE_RE);
-    if (!m) return null;
+    const regexMatch = text.match(PHONE_RE);
+    if (!regexMatch) return null;
 
     // Fazla boşlukları temizle
-    return { value: m[0].replace(/\s+/g, " ").trim() };
+    return { value: regexMatch[0].replace(/\s+/g, " ").trim() };
   },
 
   /**
@@ -76,24 +74,39 @@ module.exports = {
    * @returns {number} - 0-1 arası güven skoru
    *
    * Faktörler:
-   * - Base skor: 0.75 (telefon formatı eşleşti)
-   * - Türkiye formatı mı:
-   *   - 90 veya 05 veya 5 ile başlıyor → 1.0
-   *   - Başka format → 0.4
+   * - Etiket var mı: "tel", "telefon", "cep", "gsm"
+   * - Türkiye formatı mı: 90, 05, 5 ile başlıyor
+   * - Hane sayısı: 10-11 hane ideal
    */
   confidence(text, match) {
-    // Sadece rakamları al
+    if (!match) return 0;
+
+    const lowercaseText = text.toLowerCase();
     const digits = match.value.replace(/\D/g, "");
+    let score = 0.5; // Baz puan
 
-    // Türkiye GSM formatına uyuyor mu?
-    const looksTR =
-      digits.startsWith("90") || // Ülke koduyla
-      digits.startsWith("05") || // 0 ile
-      digits.startsWith("5"); // Direkt 5 ile
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /tel|telefon|cep|gsm|numara|phone|mobile/i.test(
+      lowercaseText,
+    );
+    if (hasLabel) {
+      score += 0.2;
+    }
 
-    return weightedAvg([
-      { value: 0.75, weight: 2 }, // Base skor
-      { value: looksTR ? 1 : 0.4, weight: 2 }, // TR formatı bonusu
-    ]);
+    // 2. Türkiye GSM formatı kontrolü (+0.2)
+    const isTurkishFormat =
+      digits.startsWith("90") ||
+      digits.startsWith("05") ||
+      digits.startsWith("5");
+    if (isTurkishFormat) {
+      score += 0.2;
+    }
+
+    // 3. Hane sayısı kontrolü (+0.1)
+    if (digits.length >= 10 && digits.length <= 12) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };

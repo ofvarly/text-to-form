@@ -14,8 +14,6 @@
  *   ✗ example.com (protokolsüz)
  */
 
-const { calculateConfidence } = require("../utils/confidenceScore");
-
 module.exports = {
   type: "url",
   name: "website",
@@ -30,10 +28,10 @@ module.exports = {
   match(text) {
     // http(s):// veya www. ile başlayan URL'ler
     const regex = /\b(?:https?:\/\/|www\.)[^\s<>"{}|\\^`[\]]+/gi;
-    const m = regex.exec(text);
-    if (!m) return null;
+    const regexMatch = regex.exec(text);
+    if (!regexMatch) return null;
 
-    let url = m[0];
+    let url = regexMatch[0];
 
     // Sonundaki noktalama işaretlerini temizle
     url = url.replace(/[.,;:!?)]+$/, "");
@@ -43,26 +41,45 @@ module.exports = {
 
   /**
    * Eşleşme güvenilirlik skoru
+   *
    * @param {string} text - Orijinal metin
    * @param {Object} match - match() sonucu
    * @returns {number} - 0-1 arası güven skoru
+   *
+   * Faktörler:
+   * - Etiket var mı: "site", "web", "link"
+   * - Protokol: https > http > www
+   * - Bilinen domain
    */
   confidence(text, match) {
     if (!match) return 0;
 
+    const lowercaseText = text.toLowerCase();
     const url = match.raw.toLowerCase();
+    let score = 0.6; // Baz puan
 
-    // https varsa yüksek güven
+    // 1. Etiket kontrolü (+0.1)
+    const hasLabel = /site|web|link|adres|url/i.test(lowercaseText);
+    if (hasLabel) {
+      score += 0.1;
+    }
+
+    // 2. Protokol kontrolü (+0.2 veya +0.15)
     if (url.startsWith("https://")) {
-      return calculateConfidence(0.95);
+      score += 0.2;
+    } else if (url.startsWith("http://")) {
+      score += 0.15;
+    } else {
+      score += 0.1; // www.
     }
 
-    // http varsa orta güven
-    if (url.startsWith("http://")) {
-      return calculateConfidence(0.9);
+    // 3. Bilinen domain (+0.1)
+    const knownDomains =
+      /google|facebook|twitter|instagram|youtube|github|linkedin/;
+    if (knownDomains.test(url)) {
+      score += 0.1;
     }
 
-    // www ile başlıyorsa
-    return calculateConfidence(0.85);
+    return Math.min(score, 1); // Max 1.0
   },
 };

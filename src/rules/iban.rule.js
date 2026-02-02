@@ -13,8 +13,6 @@
  *   ✗ DE89370400440532013000 (Almanya)
  */
 
-const { calculateConfidence } = require("../utils/confidenceScore");
-
 module.exports = {
   type: "iban",
   name: "iban",
@@ -29,38 +27,52 @@ module.exports = {
   match(text) {
     // Türk IBAN formatı: TR + 24 hane (boşluklu veya boşluksuz)
     const regex = /\bTR\s*\d{2}[\s\d]{22,30}\b/gi;
-    const m = regex.exec(text);
-    if (!m) return null;
+    const regexMatch = regex.exec(text);
+    if (!regexMatch) return null;
 
     // Boşlukları temizle
-    const cleaned = m[0].replace(/\s/g, "").toUpperCase();
+    const cleaned = regexMatch[0].replace(/\s/g, "").toUpperCase();
 
     // 26 karakter olmalı
     if (cleaned.length !== 26) return null;
 
     return {
-      raw: m[0],
+      raw: regexMatch[0],
       value: formatIban(cleaned), // Formatlı versiyonu
     };
   },
 
   /**
    * Eşleşme güvenilirlik skoru
+   *
    * @param {string} text - Orijinal metin
    * @param {Object} match - match() sonucu
    * @returns {number} - 0-1 arası güven skoru
+   *
+   * Faktörler:
+   * - Etiket var mı: "iban", "hesap"
+   * - TR ile başlıyor (zaten zorunlu)
+   * - 26 karakter (zaten zorunlu)
    */
   confidence(text, match) {
     if (!match) return 0;
-    const lower = text.toLowerCase();
 
-    // "IBAN" etiketi varsa yüksek güven
-    if (lower.includes("iban")) {
-      return calculateConfidence(0.95);
+    const lowercaseText = text.toLowerCase();
+    let score = 0.8; // Baz puan (TR26 karakter = yüksek güven)
+
+    // 1. Etiket kontrolü (+0.15)
+    const hasLabel = /iban|hesap|account/i.test(lowercaseText);
+    if (hasLabel) {
+      score += 0.15;
     }
 
-    // TR ile başlayan 26 karakter = yüksek güven
-    return calculateConfidence(0.9);
+    // 2. Formatlı mı (boşluklu) (+0.05)
+    const isFormatted = /\s/.test(match.raw);
+    if (isFormatted) {
+      score += 0.05;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };
 

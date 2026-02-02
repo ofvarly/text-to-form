@@ -15,8 +15,6 @@
  * NOT: Sadece TL/₺/lira içeren ifadeler yakalanır
  */
 
-const { weightedAvg } = require("../utils/confidenceScore");
-
 // ============================================================
 // REGEX PATTERN
 // ============================================================
@@ -63,10 +61,10 @@ module.exports = {
    *   "Bütçem 2.500 TL" → { value: "2.500 TL" }
    */
   match(text) {
-    const m = text.match(PRICE_RE);
-    if (!m) return null;
+    const regexMatch = text.match(PRICE_RE);
+    if (!regexMatch) return null;
 
-    return { value: m[0] };
+    return { value: regexMatch[0] };
   },
 
   /**
@@ -77,18 +75,38 @@ module.exports = {
    * @returns {number} - 0-1 arası güven skoru
    *
    * Faktörler:
-   * - Base skor: 0.7 (fiyat formatı eşleşti)
-   * - Para birimi içeriyor mu:
-   *   - TL, ₺ veya lira varsa → 1.0
-   *   - Yoksa → 0.3
+   * - Etiket var mı: "bütçe", "fiyat", "tutar", "ücret"
+   * - Para birimi sembolü: TL, ₺, lira
+   * - Miktar makul mü
    */
   confidence(text, match) {
-    // Para birimi sembolü veya kelimesi var mı?
-    const hasCurrency = /(tl|₺|lira)/i.test(match.value);
+    if (!match) return 0;
 
-    return weightedAvg([
-      { value: 0.7, weight: 2 }, // Base skor
-      { value: hasCurrency ? 1 : 0.3, weight: 2 }, // Para birimi bonusu
-    ]);
+    const lowercaseText = text.toLowerCase();
+    let score = 0.5; // Baz puan
+
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /bütçe|fiyat|tutar|ücret|maliyet|price|cost/i.test(
+      lowercaseText,
+    );
+    if (hasLabel) {
+      score += 0.2;
+    }
+
+    // 2. Para birimi sembolü kontrolü (+0.2)
+    const hasCurrency = /(tl|₺|lira)/i.test(match.value);
+    if (hasCurrency) {
+      score += 0.2;
+    }
+
+    // 3. Makul miktar kontrolü (+0.1)
+    const amount = parseFloat(
+      match.value.replace(/[^\d,\.]/g, "").replace(",", "."),
+    );
+    if (amount > 0 && amount < 10000000) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };

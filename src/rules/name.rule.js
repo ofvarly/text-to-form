@@ -18,8 +18,6 @@
  * NOT: Türkçe isim algılama çok karmaşık, bu MVP seviyesinde.
  */
 
-const { weightedAvg } = require("../utils/confidenceScore");
-
 // ============================================================
 // REGEX PATTERN
 // ============================================================
@@ -42,7 +40,7 @@ const { weightedAvg } = require("../utils/confidenceScore");
  *   "adım ali"              → YAKALANMAZ (küçük harfle başlıyor)
  */
 const NAME_RE =
-  /\b(adım|adim|ben)\s+([A-ZÇĞİÖŞÜ][a-zçğıöşü]+(\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+){1,3})\b/;
+  /\b(isim|ad|adi|adı|adım|adim|ben)\s+([A-ZÇĞİÖŞÜa-zçğıöşü]+(\s+[A-ZÇĞİÖŞÜa-zçğıöşü]+){1,3})\b/i;
 
 // ============================================================
 // RULE EXPORT
@@ -66,14 +64,14 @@ module.exports = {
    *   "Merhaba, adım Ahmet Yılmaz." → { value: "Ahmet Yılmaz" }
    *   "Ben Mehmet" → { value: "Mehmet" }
    *
-   * NOT: m[2] kullanılıyor çünkü m[1] tetikleyici kelime ("adım")
+   * NOT: regexMatch[2] kullanılıyor çünkü regexMatch[1] tetikleyici kelime ("adım")
    */
   match(text) {
-    const m = text.match(NAME_RE);
-    if (!m) return null;
+    const regexMatch = text.match(NAME_RE);
+    if (!regexMatch) return null;
 
-    // m[2] = yakalanan isim kısmı (tetikleyici hariç)
-    return { value: m[2] };
+    // regexMatch[2] = yakalanan isim kısmı (tetikleyici hariç)
+    return { value: regexMatch[2] };
   },
 
   /**
@@ -84,21 +82,34 @@ module.exports = {
    * @returns {number} - 0-1 arası güven skoru
    *
    * Faktörler:
-   * - Base skor: 0.55 (isim algılama belirsiz)
-   * - Kelime sayısı:
-   *   - 2+ kelime (ad soyad) → 0.85
-   *   - 1 kelime (sadece ad) → 0.4
-   *
-   * NOT: Base skor düşük çünkü isim algılama hata yapabilir.
-   * Örneğin "Adım bitmedi" → "bitmedi" yanlış yakalanabilir.
+   * - Tetikleyici etiket var mı: "adım", "ben", "isim"
+   * - Kelime sayısı: 2+ kelime (ad soyad) daha güvenilir
+   * - İsim uzunluğu: çok kısa isimler daha az güvenilir
    */
   confidence(text, match) {
-    // Kaç kelime var?
-    const parts = match.value.trim().split(/\s+/).length;
+    if (!match) return 0;
 
-    return weightedAvg([
-      { value: 0.55, weight: 2 }, // Düşük base skor
-      { value: parts >= 2 ? 0.85 : 0.4, weight: 2 }, // Ad+soyad bonusu
-    ]);
+    const lowercaseText = text.toLowerCase();
+    const name = match.value.trim();
+    const wordCount = name.split(/\s+/).length;
+    let score = 0.5; // Baz puan
+
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /adı|adım|isim|ben|name/i.test(lowercaseText);
+    if (hasLabel) {
+      score += 0.2;
+    }
+
+    // 2. Ad + Soyad kontrolü (+0.2)
+    if (wordCount >= 2) {
+      score += 0.2;
+    }
+
+    // 3. İsim uzunluğu kontrolü (+0.1)
+    if (name.length >= 5) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };

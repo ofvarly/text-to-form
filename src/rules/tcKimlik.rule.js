@@ -14,8 +14,6 @@
  *   ✗ 01234567890 (0 ile başlıyor)
  */
 
-const { calculateConfidence } = require("../utils/confidenceScore");
-
 module.exports = {
   type: "tcKimlik",
   name: "tc_kimlik",
@@ -31,10 +29,10 @@ module.exports = {
     // TC, T.C., tc kimlik gibi etiketlerle veya tek başına 11 hane
     const regex =
       /(?:tc|t\.?c\.?\s*(?:kimlik)?(?:\s*(?:no|numarası?))?\s*[:\-]?\s*)?(\d{11})\b/gi;
-    const m = regex.exec(text);
-    if (!m) return null;
+    const regexMatch = regex.exec(text);
+    if (!regexMatch) return null;
 
-    const tcNo = m[1];
+    const tcNo = regexMatch[1];
 
     // İlk hane 0 olamaz
     if (tcNo[0] === "0") return null;
@@ -47,21 +45,34 @@ module.exports = {
 
   /**
    * Eşleşme güvenilirlik skoru
+   *
    * @param {string} text - Orijinal metin
    * @param {Object} match - match() sonucu
    * @returns {number} - 0-1 arası güven skoru
+   *
+   * Faktörler:
+   * - Etiket var mı: "tc", "kimlik", "t.c."
+   * - Algoritma geçerli (match varsa zaten geçerli)
    */
   confidence(text, match) {
     if (!match) return 0;
-    const lower = text.toLowerCase();
 
-    // "tc kimlik" etiketi varsa yüksek güven
-    if (lower.includes("tc") || lower.includes("kimlik")) {
-      return calculateConfidence(0.95);
+    const lowercaseText = text.toLowerCase();
+    let score = 0.7; // Baz puan (algoritma geçerli)
+
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /tc|t\.c\.|kimlik|identity/i.test(lowercaseText);
+    if (hasLabel) {
+      score += 0.2;
     }
 
-    // Sadece 11 hane varsa düşük güven
-    return calculateConfidence(0.75);
+    // 2. "no" veya "numarası" varsa (+0.1)
+    const hasNoLabel = /no|numara/i.test(lowercaseText);
+    if (hasNoLabel) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };
 

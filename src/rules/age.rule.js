@@ -13,8 +13,6 @@
  *   ✗ 200 yaşında (mantıksız)
  */
 
-const { calculateConfidence } = require("../utils/confidenceScore");
-
 module.exports = {
   type: "age",
   name: "age",
@@ -27,23 +25,23 @@ module.exports = {
    * @returns {Object|null} - Eşleşme varsa { raw, value }, yoksa null
    */
   match(text) {
-    const lower = text.toLowerCase();
+    const lowercaseText = text.toLowerCase();
 
     // Pattern 1: "25 yaşındayım", "30 yaşında"
-    let m = lower.match(/(\d{1,3})\s*yaş(?:ında(?:yım)?)?/);
-    if (m) {
-      const age = parseInt(m[1], 10);
-      if (age >= 0 && age <= 150) {
-        return { raw: m[0], value: age };
+    let regexMatch = lowercaseText.match(/(\d{1,3})\s*yaş(?:ında(?:yım)?)?/);
+    if (regexMatch) {
+      const ageValue = parseInt(regexMatch[1], 10);
+      if (ageValue >= 0 && ageValue <= 150) {
+        return { raw: regexMatch[0], value: ageValue };
       }
     }
 
     // Pattern 2: "yaşım 25"
-    m = lower.match(/yaşım?\s*[:\-]?\s*(\d{1,3})/);
-    if (m) {
-      const age = parseInt(m[1], 10);
-      if (age >= 0 && age <= 150) {
-        return { raw: m[0], value: age };
+    regexMatch = lowercaseText.match(/yaşım?\s*[:\-]?\s*(\d{1,3})/);
+    if (regexMatch) {
+      const ageValue = parseInt(regexMatch[1], 10);
+      if (ageValue >= 0 && ageValue <= 150) {
+        return { raw: regexMatch[0], value: ageValue };
       }
     }
 
@@ -52,21 +50,35 @@ module.exports = {
 
   /**
    * Eşleşme güvenilirlik skoru
+   *
    * @param {string} text - Orijinal metin
    * @param {Object} match - match() sonucu
    * @returns {number} - 0-1 arası güven skoru
+   *
+   * Faktörler:
+   * - Etiket var mı: "yaş", "yaşındayım"
+   * - Yaş aralığı: 18-80 arası daha güvenilir
    */
   confidence(text, match) {
     if (!match) return 0;
 
-    const age = match.value;
+    const lowercaseText = text.toLowerCase();
+    const ageValue = match.value;
+    let score = 0.6; // Baz puan
 
-    // Mantıklı yaş aralığı (18-80) yüksek güven
-    if (age >= 18 && age <= 80) {
-      return calculateConfidence(0.9);
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /yaş|age/i.test(lowercaseText);
+    if (hasLabel) {
+      score += 0.2;
     }
 
-    // Diğer geçerli yaşlar orta güven
-    return calculateConfidence(0.75);
+    // 2. Makul yaş aralığı kontrolü (+0.2)
+    if (ageValue >= 18 && ageValue <= 80) {
+      score += 0.2;
+    } else if (ageValue >= 0 && ageValue <= 150) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };

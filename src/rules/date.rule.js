@@ -14,8 +14,6 @@
  * ÇIKTI: ISO formatı (YYYY-MM-DD) döndürür
  */
 
-const { weightedAvg } = require("../utils/confidenceScore");
-
 // ============================================================
 // REGEX PATTERNLERİ
 // ============================================================
@@ -172,17 +170,17 @@ module.exports = {
    */
   match(text) {
     // Önce sayısal formatı dene (03.05.2026)
-    let m = text.match(DOT_DATE_RE);
-    if (m) {
-      const raw = m[0];
+    let regexMatch = text.match(DOT_DATE_RE);
+    if (regexMatch) {
+      const raw = regexMatch[0];
       const iso = parseToISO(raw);
       return { raw, value: iso || raw };
     }
 
     // Sonra yazılı formatı dene (5 mayıs 2026)
-    m = text.match(TEXT_DATE_RE);
-    if (m) {
-      const raw = m[0];
+    regexMatch = text.match(TEXT_DATE_RE);
+    if (regexMatch) {
+      const raw = regexMatch[0];
       const iso = parseToISO(raw);
       return { raw, value: iso || raw };
     }
@@ -199,15 +197,36 @@ module.exports = {
    * @returns {number} - 0-1 arası güven skoru
    *
    * Faktörler:
-   * - Base skor: 0.65 (tarih formatı eşleşti)
-   * - Sayı içeriyor mu: Evet → 0.9, Hayır → 0.5
+   * - Etiket var mı: "tarih", "randevu", "doğum", "date"
+   * - ISO formatına dönüştürülebildi mi
+   * - Sayısal format mı (03.05.2026 vs 5 mayıs)
    */
   confidence(text, match) {
-    const looksNumeric = /\d/.test(match.raw);
+    if (!match) return 0;
 
-    return weightedAvg([
-      { value: 0.65, weight: 2 }, // Base skor
-      { value: looksNumeric ? 0.9 : 0.5, weight: 2 }, // Sayısal mı?
-    ]);
+    const lowercaseText = text.toLowerCase();
+    let score = 0.5; // Baz puan
+
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /tarih|randevu|doğum|date|appointment/i.test(
+      lowercaseText,
+    );
+    if (hasLabel) {
+      score += 0.2;
+    }
+
+    // 2. ISO formatına dönüştürülebildi mi (+0.2)
+    const isValidISO = match.value && match.value.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (isValidISO) {
+      score += 0.2;
+    }
+
+    // 3. Sayısal format kontrolü (+0.1)
+    const hasNumbers = /\d/.test(match.raw);
+    if (hasNumbers) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };

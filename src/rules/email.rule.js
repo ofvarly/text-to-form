@@ -13,8 +13,6 @@
  * NOT: Basit regex, tüm edge case'leri kapsamaz (RFC 5322 tam uyumu yok)
  */
 
-const { weightedAvg } = require("../utils/confidenceScore");
-
 // ============================================================
 // REGEX PATTERN
 // ============================================================
@@ -54,10 +52,10 @@ module.exports = {
    *   "Mail: test@example.com" → { value: "test@example.com" }
    */
   match(text) {
-    const m = text.match(EMAIL_RE);
-    if (!m) return null;
+    const regexMatch = text.match(EMAIL_RE);
+    if (!regexMatch) return null;
 
-    return { value: m[0] };
+    return { value: regexMatch[0] };
   },
 
   /**
@@ -68,20 +66,37 @@ module.exports = {
    * @returns {number} - 0-1 arası güven skoru
    *
    * Faktörler:
-   * - Base skor: 0.9 (regex eşleşti = yüksek güven)
-   * - @ içeriyor mu: 1 veya 0
-   * - . içeriyor mu: 1 veya 0
-   *
-   * E-posta regex'i çok spesifik olduğu için base skor yüksek tutuldu.
+   * - Etiket var mı: "mail", "e-posta", "iletişim" gibi
+   * - Bilinen domain: gmail, hotmail, outlook
+   * - Username uzunluğu: daha uzun = daha güvenilir
    */
   confidence(text, match) {
-    const hasAt = match.value.includes("@") ? 1 : 0;
-    const hasDot = match.value.includes(".") ? 1 : 0;
+    if (!match) return 0;
 
-    return weightedAvg([
-      { value: 0.9, weight: 3 }, // Yüksek base skor (regex güvenilir)
-      { value: hasAt, weight: 1 },
-      { value: hasDot, weight: 1 },
-    ]);
+    const lowercaseText = text.toLowerCase();
+    const email = match.value.toLowerCase();
+    let score = 0.6; // Baz puan (regex eşleşti)
+
+    // 1. Etiket kontrolü (+0.2)
+    const hasLabel = /mail|e-?posta|iletişim|contact|email/i.test(
+      lowercaseText,
+    );
+    if (hasLabel) {
+      score += 0.2;
+    }
+
+    // 2. Bilinen domain kontrolü (+0.1)
+    const knownDomains = /gmail|hotmail|outlook|yahoo|yandex|icloud/;
+    if (knownDomains.test(email)) {
+      score += 0.1;
+    }
+
+    // 3. Username uzunluğu kontrolü (+0.1)
+    const username = email.split("@")[0];
+    if (username.length >= 5) {
+      score += 0.1;
+    }
+
+    return Math.min(score, 1); // Max 1.0
   },
 };
